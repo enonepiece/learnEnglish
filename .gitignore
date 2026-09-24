@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+
+# Temp Audio Generation Cache
+temp_audio_*/
+/*.mp3
+part*.mp3
+sample_*.mp3
+test*.mp3
+ssml_test.mp3
+net_test.mp3
+silence_*.mp3
+combined.mp3
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
