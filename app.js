@@ -407,9 +407,40 @@
   }
 
   /* ------------------------------------------------------------------------
-     6. Web Speech Synthesis (In-Browser Fallback & Quick Audio)
+     6. Professional Pronunciation Audio Engine (Studio American Voice)
      ------------------------------------------------------------------------ */
-  function speakEnglish(text, rate = 0.8) {
+  const pronunciationAudio = new Audio();
+  let cachedEnglishVoices = [];
+
+  function loadSpeechVoices() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      cachedEnglishVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+    }
+  }
+
+  if ('speechSynthesis' in window) {
+    speechSynthesis.onvoiceschanged = loadSpeechVoices;
+    loadSpeechVoices();
+  }
+
+  function getBestEnglishVoice() {
+    if (cachedEnglishVoices.length === 0) {
+      loadSpeechVoices();
+    }
+    const preferred = cachedEnglishVoices.find(v => 
+      v.lang === 'en-US' && /natural|jenny|guy|aria|samantha|zira|google/i.test(v.name)
+    );
+    if (preferred) return preferred;
+
+    const usAny = cachedEnglishVoices.find(v => v.lang === 'en-US');
+    if (usAny) return usAny;
+
+    return cachedEnglishVoices[0] || null;
+  }
+
+  function speakEnglishFallback(text, rate = 0.8) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
 
@@ -417,14 +448,59 @@
     utterance.lang = 'en-US';
     utterance.rate = rate;
 
-    // Pick native US English voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const usVoice = voices.find(v => v.lang === 'en-US' && (v.name.includes('Natural') || v.name.includes('Jenny') || v.name.includes('Samantha')));
-    if (usVoice) {
-      utterance.voice = usVoice;
+    const voice = getBestEnglishVoice();
+    if (voice) {
+      utterance.voice = voice;
     }
 
     window.speechSynthesis.speak(utterance);
+  }
+
+  function playPronunciation(text, isSentence = false, buttonEl = null) {
+    if (!text) return;
+    const cleanText = text.trim();
+
+    if (buttonEl) {
+      buttonEl.style.transform = 'scale(1.25)';
+      buttonEl.style.color = 'var(--accent-cyan)';
+    }
+
+    const resetButton = () => {
+      if (buttonEl) {
+        buttonEl.style.transform = '';
+        buttonEl.style.color = '';
+      }
+    };
+
+    pronunciationAudio.onended = resetButton;
+    pronunciationAudio.onerror = () => {
+      resetButton();
+      speakEnglishFallback(cleanText, isSentence ? 0.85 : 0.75);
+    };
+
+    let audioUrl = '';
+    const isSingleWord = !isSentence && /^[a-zA-Z\s\-']+$/.test(cleanText) && cleanText.split(/\s+/).length <= 2;
+
+    if (isSingleWord) {
+      // 100% Native American English dictionary studio voice
+      const wordOnly = cleanText.toLowerCase();
+      audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(wordOnly)}&type=2`;
+    } else {
+      // Sentence: Google TTS American English voice
+      audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+    }
+
+    pronunciationAudio.pause();
+    pronunciationAudio.src = audioUrl;
+    pronunciationAudio.playbackRate = isSentence ? 0.95 : 0.85;
+
+    const playPromise = pronunciationAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        resetButton();
+        speakEnglishFallback(cleanText, isSentence ? 0.85 : 0.75);
+      });
+    }
   }
 
   /* ------------------------------------------------------------------------
@@ -597,7 +673,7 @@
       const speakWordBtn = e.target.closest('[data-speak-word]');
       if (speakWordBtn) {
         const wordText = speakWordBtn.getAttribute('data-speak-word');
-        speakEnglish(wordText, 0.75);
+        playPronunciation(wordText, false, speakWordBtn);
         return;
       }
 
@@ -605,7 +681,7 @@
       const speakExBtn = e.target.closest('[data-speak-sentence]');
       if (speakExBtn) {
         const sentenceText = speakExBtn.getAttribute('data-speak-sentence');
-        speakEnglish(sentenceText, 0.85);
+        playPronunciation(sentenceText, true, speakExBtn);
         return;
       }
 
@@ -632,7 +708,7 @@
     el.studioBtnSpeak.addEventListener('click', () => {
       const word = state.words[state.studioWordIdx];
       if (word) {
-        speakEnglish(word.w, 0.75);
+        playPronunciation(word.w, false, el.studioBtnSpeak);
         startShadowingCountdown();
       }
     });
@@ -660,7 +736,7 @@
         } else if (e.key === ' ') {
           e.preventDefault();
           const word = state.words[state.studioWordIdx];
-          if (word) speakEnglish(word.w, 0.75);
+          if (word) playPronunciation(word.w, false, el.studioBtnSpeak);
         }
         return;
       }
