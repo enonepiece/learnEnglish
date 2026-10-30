@@ -73,3 +73,6 @@
 * 📄 **[完整對照學習手冊 (Markdown)](OGDEN_850_COMMUTE_HANDBOOK.md)**：包含全套 850 詞完整表格、核心意象解說、2026 例句、中文翻譯與置換近義詞。
 * 🗄️ **`ogden_850_master.json`**：850 詞結構化核心資料庫，提供所有詞彙的精準元資料。
 * 🎵 **`audio/`**：43 集已生成的廣播級 MP3 檔案（共約 175 MB）。
+
+## ▶️ Youtube channel
+https://www.youtube.com/@Anpeilearn
