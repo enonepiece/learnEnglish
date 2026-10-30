@@ -74,5 +74,9 @@
 * 🗄️ **`ogden_850_master.json`**：850 詞結構化核心資料庫，提供所有詞彙的精準元資料。
 * 🎵 **`audio/`**：43 集已生成的廣播級 MP3 檔案（共約 175 MB）。
 
+## 👨‍💻 作者
+
+**Andrew Chen** — [LinkedIn](https://tw.linkedin.com/in/andrew-chen-a76900264)
+
 ## ▶️ Youtube channel
 https://www.youtube.com/@Anpeilearn
